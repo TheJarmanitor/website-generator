@@ -1,3 +1,4 @@
+use pulldown_cmark::{Options, Parser, TextMergeStream};
 use serde::Deserialize;
 use std::{env, fs, io, process};
 
@@ -26,8 +27,16 @@ fn main() {
         eprintln!("Problem deserializing YAML: {err}");
         process::exit(1);
     });
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_MATH);
+    let parser = Parser::new_ext(post, options);
 
+    let iterator = TextMergeStream::new(parser).inspect(|x| println!("{:?}", x));
+
+    let mut html_output = String::new();
+    pulldown_cmark::html::push_html(&mut html_output, iterator);
     println!("{:?}", meta);
+    println!("{}", html_output);
 }
 
 fn read_markdown_file(file_path: &str) -> Result<String, io::Error> {
