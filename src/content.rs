@@ -1,7 +1,8 @@
-use pulldown_cmark::{Options, Parser, TextMergeStream};
+use pulldown_cmark::{Options, Parser};
 use serde::Deserialize;
+use std::fmt::Display;
 use std::path::Path;
-use std::{env, fs, io, process};
+use std::{fs, io};
 
 #[derive(Deserialize)]
 struct PostMeta {
@@ -12,43 +13,55 @@ struct PostMeta {
 
 pub struct Post {
     post_meta: PostMeta,
-    html_body: String,
+    pub html_body: String,
 }
 
+impl Post {
+    fn new(post_meta: PostMeta, html_body: String) -> Self {
+        Post {
+            post_meta,
+            html_body,
+        }
+    }
+}
 #[derive(Debug)]
-enum ContentError {
-    Io(io::Error),
+pub enum ContentError {
+    IoError(io::Error),
+    FrontMatterError(),
+    YamlError(yaml_serde::Error),
+}
+
+impl Display for ContentError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ContentError::IoError(io_error) => write!(f, "{}", io_error),
+            ContentError::FrontMatterError()
+        }
+    }
 }
 
 pub fn load_post(path: &Path) -> Result<Post, ContentError> {
-    let Some(path) = env::args().nth(1) else {
-        eprintln!("Problem parsing arguments: No path argument was found");
-        process::exit(1);
-    };
-    let markdown = fs::read_to_string(&path).unwrap_or_else(|err| {
-        eprintln!("Problem reading file: {err}");
-        process::exit(1);
-    });
-
-    let Some((front, post)) = split_frontmatter(&markdown) else {
-        eprintln!("Problem reading YAML: no metadata found or broken");
-        process::exit(1);
-    };
-    let meta: PostMeta = yaml_serde::from_str(front).unwrap_or_else(|err| {
-        eprintln!("Problem deserializing YAML: {err}");
-        process::exit(1);
-    });
+    // io::Error
+    let markdown: String = fs::read_to_string(&path)?;
+    // Custom frontmatter error
+    let (front, body) = split_frontmatter(&markdown).ok_or(ContentError::Front)?;
+    // yaml_serde::Error
+    let meta: PostMeta = yaml_serde::from_str(front)?;
     let mut options = Options::empty();
     options.insert(Options::ENABLE_MATH);
-    let parser = Parser::new_ext(post, options);
+    let parser = Parser::new_ext(body, options);
 
     let mut html_output = String::new();
     pulldown_cmark::html::push_html(&mut html_output, parser);
+
+    let post = Post::new(meta, html_output);
+
+    Ok(post)
 }
 
-fn split_frontmatter(content: &str) -> Option<(&str, &str)> {
+fn split_frontmatter(content: &str) -> Result<(&str, &str), ContentError> {
     if !content.starts_with("---") {
-        return None;
+        return;
     };
     content[3..]
         .split_once("---")
