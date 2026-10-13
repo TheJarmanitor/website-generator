@@ -10,7 +10,7 @@ fn main() {
     let post = content::load_post(Path::new(&string_path));
 
     match post {
-        Ok(p) => println!("post body working:/n {}", p.html_body),
+        Ok(p) => println!("post body working:\n {}", p.html_body),
         Err(e) => {
             eprintln!("error: {e}");
             process::exit(1);
