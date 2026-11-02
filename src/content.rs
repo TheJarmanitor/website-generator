@@ -79,7 +79,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn return_post_and_meta_split() {
+    fn frontmatter_return_post_and_meta_split() {
         let mark = "---\ndate: '2026-10-30'\ntitle: 'testing'\n---\nhello world";
         let split = split_frontmatter(mark);
 
@@ -90,7 +90,7 @@ mod tests {
     }
 
     #[test]
-    fn no_opening_delimeter() {
+    fn frontmatter_no_opening_delimeter() {
         let mark = "date: '2026-10-30'\ntitle: 'wrong'---";
 
         let split = split_frontmatter(mark);
@@ -99,7 +99,7 @@ mod tests {
     }
 
     #[test]
-    fn malformed_opening_delimeter() {
+    fn frontmatter_malformed_opening_delimeter() {
         let mark = "----\ndate: '2026-10-30'\ntitle: 'wrong'---";
 
         let split = split_frontmatter(mark);
@@ -107,7 +107,7 @@ mod tests {
         assert_eq!(split.unwrap_err(), FrontMatterError::MissingOpeningLine);
     }
     #[test]
-    fn no_break_opening_delimeter() {
+    fn frontmatter_no_break_opening_delimeter() {
         let mark = "---date: '2026-10-30'\ntitle: 'wrong'---";
 
         let split = split_frontmatter(mark);
@@ -115,7 +115,7 @@ mod tests {
         assert_eq!(split.unwrap_err(), FrontMatterError::MissingOpeningLine);
     }
     #[test]
-    fn no_closing_delimeter() {
+    fn frontmatter_no_closing_delimeter() {
         let mark = "---\ndate: '2026-10-30'\ntitle: 'wrong'";
 
         let split = split_frontmatter(mark);
@@ -124,7 +124,7 @@ mod tests {
     }
 
     #[test]
-    fn extra_delimeter_in_post() {
+    fn frontmatter_extra_delimeter_in_post() {
         let mark = "---\ndate:'2026-10-30\ntitle: 'testing'\n---\nhello\n---\nworld";
         let split = split_frontmatter(mark);
 
@@ -134,7 +134,7 @@ mod tests {
         );
     }
     #[test]
-    fn extra_delimeter_in_meta() {
+    fn frontmatter_extra_delimeter_in_meta() {
         let mark = "---\ndate: '2026-10-30\ntitle: 'wrong---stuff'\n---\nhello world";
         let split = split_frontmatter(mark);
 
@@ -144,7 +144,7 @@ mod tests {
         );
     }
     #[test]
-    fn empty_body() {
+    fn frontmatter_empty_body() {
         let mark = "---\ndate: '2026-10-30\ntitle: 'empty post'\n---";
         let split = split_frontmatter(mark);
 
@@ -152,7 +152,7 @@ mod tests {
     }
 
     #[test]
-    fn empty_frontmatter() {
+    fn frontmatter_empty_yaml() {
         let mark = "---\n---\nbody";
         let split = split_frontmatter(mark);
 
